@@ -132,7 +132,7 @@ namespace arc2MIDI {
         trackData.forEach(function(v,i) {
             trackBufferArray.push(generateTrack(extractEvents(v,i),i)); // line of death. guaranteed arcade crash
         });
-        return b64output ? assembleMIDIFile(trackBufferArray).toBase64() : assembleMIDIFile(trackBufferArray).toHex();
+        console.log(b64output ? assembleMIDIFile(trackBufferArray).toBase64() : assembleMIDIFile(trackBufferArray).toHex());
     };
     export let tick480: boolean = true; // set tick rate of midi file to 480 ticks/quarter note
     let bpm: uint16;
