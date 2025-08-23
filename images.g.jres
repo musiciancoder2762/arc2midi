@@ -1,15 +1,4 @@
 {
-    "image1": {
-        "data": "hwQQABAAAABmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZg==",
-        "mimeType": "image/x-mkcd-f4",
-        "displayName": "bluh"
-    },
-    "song1": {
-        "data": "0078000408010105001c000f0a006400f4010a00000400000000000000000000000000000000022a0000000400012504000800012008000c00011d0c001000011910001400011d14001800012018001c000125",
-        "mimeType": "application/mkcd-song",
-        "displayName": "sigma",
-        "namespace": "mySongs."
-    },
     "*": {
         "mimeType": "image/x-mkcd-f4",
         "dataEncoding": "base64",
