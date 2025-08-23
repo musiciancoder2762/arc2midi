@@ -126,7 +126,7 @@ namespace arc2MIDI {
         noteVelocity = 90;
         timeSignature = file.getUint8(3);
         tickConstant = tick480 ? 480 / file.getUint8(4) : 1;
-        tickRate = tick480?480:file.getUint8(4);
+        tickRate = tick480?480:file.getUint8(4)/4;
         trackAmount = file.getUint8(6);
         let trackData: Buffer[] = getTrackData(file);
         trackData.forEach(function(v,i) {
