@@ -29,16 +29,16 @@ To edit this repository in MakeCode.
 
 contents:
 
-- [installation] 
-- [usage]
-- [potential errors & solutions]
-- [advanced extra info]
+- [installation](#installation)  
+- [usage](#usage)  
+- [potential errors & solutions](#potential-errors-&-solutions)  
+- [advanced extra info](#advanced-extra-info)
 
 warning: this is an extremely early release and it is not fully released yet. arc2midi as of right now is unable to convert any song that contains percussion.
 
 # installation {#installation}
 
-copy the arc2midi link (blah blah) and then go to the extensions button at the left side of your code (where the music, sprite, math, logic, etc. sections are located). there will be a search input above the extensions and paste said link in there.
+copy the arc2midi link ([https://github.com/musiciancoder2762/arc2midi](https://github.com/musiciancoder2762/arc2midi)) and then go to the extensions button at the left side of your code (where the music, sprite, math, logic, etc. sections are located). there will be a search input above the extensions and paste said link in there.
 
 # usage {#usage}
 
