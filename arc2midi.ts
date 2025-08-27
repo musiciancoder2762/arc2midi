@@ -47,6 +47,9 @@ namespace arc2MIDI {
         if (channelNo>15) {channelNo = 15};
         if (channelNo===9) {channelNo = 10}; // channel 0xn9 (channel 10) is reserved for percussion
         if (noteVelocity > 0x7f) { noteVelocity = 0x7f; };
+        if (track[1]===1) {
+            return [[-1]];
+        } // detect if track is percussion/drum, then skip this track to prevent it from crashing (temp)
         while (byteIndex < cleanTrk.length) {
             noteAmount = 0;
             while (noteAmount < cleanTrk.getUint8(byteIndex+4)) {
@@ -80,6 +83,9 @@ namespace arc2MIDI {
         trackBuffer.write(8,Buffer.fromHex("00ff0308")); // declare track name
         trackBuffer.write(12, Buffer.fromUTF8(`TRACK ${trackNumber < 10 ? `0${trackNumber}` : trackNumber}`)); // set track name
         trackBuffer.write(20,Buffer.fromHex("00c000")); // set instrument to piano
+        if (events === [[-1]]) {
+            return Buffer.fromHex("4D54726B0000001200FF030A5045524320545241434B00FF2F00");
+        } // detect if percussion, then return empty track;
         events.forEach(function(value,index) {
             int2vlq(value[0]).forEach(function(v,i) {
                 eventBuffer = eventBuffer.concat(Buffer.fromArray([v]));
