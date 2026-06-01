@@ -1,4 +1,5 @@
 // convert arcade songs into midi
+//% icon="\uf15b" block="Arc2MIDI" color="#273C60"
 namespace arc2MIDI {
     let instrumentDataArray: Buffer[] = [ // assign instrument to its respective channel if any of the instrument data is recognised, otherwise use grand piano (0)
         hex`010A006400F401640000040000000000000000000000000005000004`, // dog instrument = ocarina (79)
@@ -208,7 +209,12 @@ namespace arc2MIDI {
         });
         return finalMIDI;
     };
-
+    
+    /**
+         * Create a Type 1 Standard MIDI File of song and output its contents in the console
+         * @param file Song to be converted to SMF. ex:assets.song`songname`
+    */
+    //% block="create MIDI file of song $file"
     export function createMIDI(file: Buffer) { // create midi file from assembled midi data
         let trackBufferArray: Buffer[] = [];
         tick480 = true; // set tick rate of midi file to 480 ticks/quarter note
