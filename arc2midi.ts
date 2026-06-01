@@ -34,6 +34,14 @@ namespace arc2MIDI {
         "Lemon",
         "Drums"
     ]
+    /*let arcadePercussionArray: Buffer[] = [
+        hex`026400000403780000040A0003010000006400`,
+        hex`01C800000401000000006400`,
+        hex`01640000040100000000FA00`,
+        hex`04AF00000401C80000040A00019600000414000501006400140005010000002C01`,
+        hex``
+    ];*/
+    let arcadePercussionMIDINoteArray: uint8[] = [36, 36, 41, 38, 40, 42, 44, 46, 49, 39, 35, 35, 35, 35, 45, 48, 50, 35, 35, 53, 53, 35, 35, 35];
     let trackNames: string[] = [];
     function int2vlq(int: number) { // convert integer to variable quantity length to state duration of events
         let vlq = [];
@@ -71,6 +79,19 @@ namespace arc2MIDI {
         return (note & 63) + (12 * octave) - 1;
     };
 
+    function extractPercEvents(track: Buffer) { // extract events if its percussion
+        //let percussionStepData: Buffer = track.slice(4,track.getNumber(NumberFormat.UInt16LE,2));
+        let percussionNoteData: Buffer = track.slice(4 + track.getNumber(NumberFormat.UInt16LE, 2) + 2); // 4 = track header data before percussion step data. 2 = byte length of note data after step data
+        //let percussionStep: Buffer;
+        /*for (let ind = 0; ind < percussionStepData.length; ind++) {
+            percussionStep = percussionStepData.slice(ind,percussionStepData.getUint8(ind)*7+5);
+            //arcadePercussionArray.push(36);
+            ind += percussionStepData.getUint8(ind) * 7 + 4; // -1 to avoid skipping a byte
+            game.splash(ind);
+        }*/
+        return percussionNoteData;
+    }
+
     function extractEvents(track: Buffer, channelNo: number) { // extract note data from the extracted tracks and store each note in an array
         let cleanTrk: Buffer = track.slice(34); // raw track data without any header/instrument info
         let instrumentOctave: number = track.getUint8(31); // get instrument octave
@@ -83,15 +104,16 @@ namespace arc2MIDI {
         if (channelNo > 15) { channelNo = 0 };
         if (channelNo === 9) { channelNo = 10 }; // channel 0xn9 (channel 10) is reserved for percussion
         if (noteVelocity > 0x7f) { noteVelocity = 0x7f; };
-        if (track[1] === 1) {
+        if (track[1] === 1) { // second byte of track determines if track is melodic or percussive. 0 = melodic     1 = percussion
+            channelNo = 9;
             isPercussion = true;
-            return [[-1]];
+            cleanTrk = extractPercEvents(track);
         } else {
             isPercussion = false;
         } // detect if track is percussion/drum, then skip this track to prevent it from crashing (temp)
         for (let i = 0; i < instrumentDataArray.length; i++) {
             if (instrumentDataArray[i].equals(trackInstrument)) {
-                game.splash(`instrument ${i} recognised`, [0x00, (0xc0 + channelNo), midiInstrumentIndexArray[i]])
+                //game.splash(`instrument ${i} recognised`, [0x00, (0xc0 + channelNo), midiInstrumentIndexArray[i]])
                 events.push([0x00, (0xc0 + channelNo), midiInstrumentIndexArray[i]]);
                 trackNames.push(trackNameArray[i]);
                 break;
@@ -105,10 +127,9 @@ namespace arc2MIDI {
         while (byteIndex < cleanTrk.length) {
             noteAmount = 0;
             while (noteAmount < cleanTrk.getUint8(byteIndex + 4)) {
-                events.push([cleanTrk.getNumber(NumberFormat.UInt16LE, 0 + byteIndex) * (tick480 ? tickConstant : 1), 0x90 + channelNo, convertArcNotetoMIDINote(cleanTrk.getUint8(noteAmount + byteIndex + 5), instrumentOctave), noteVelocity]);
-                events.push([cleanTrk.getNumber(NumberFormat.UInt16LE, 2 + byteIndex) * (tick480 ? tickConstant : 1), 0x80 + channelNo, convertArcNotetoMIDINote(cleanTrk.getUint8(noteAmount + byteIndex + 5), instrumentOctave), 0]);
+                events.push([cleanTrk.getNumber(NumberFormat.UInt16LE, 0 + byteIndex) * (tick480 ? tickConstant : 1), 0x90 + channelNo, (!isPercussion) ? convertArcNotetoMIDINote(cleanTrk.getUint8(noteAmount + byteIndex + 5), instrumentOctave) : arcadePercussionMIDINoteArray[cleanTrk.getUint8(noteAmount + byteIndex + 5)], noteVelocity]);
+                events.push([cleanTrk.getNumber(NumberFormat.UInt16LE, 2 + byteIndex) * (tick480 ? tickConstant : 1), 0x80 + channelNo, (!isPercussion) ? convertArcNotetoMIDINote(cleanTrk.getUint8(noteAmount + byteIndex + 5), instrumentOctave) : arcadePercussionMIDINoteArray[cleanTrk.getUint8(noteAmount + byteIndex + 5)], 0]);
                 noteAmount++;
-                //game.splash([cleanTrk.getNumber(NumberFormat.UInt16LE, 0 + byteIndex) * (tick480 ? tickConstant : 1), 0x90 + channelNo, convertArcNotetoMIDINote(cleanTrk.getUint8(noteAmount + byteIndex + 5), instrumentOctave), noteVelocity])
             }
             byteIndex += (5 + cleanTrk.getUint8(byteIndex + 4));
         }
@@ -134,9 +155,9 @@ namespace arc2MIDI {
         let eventBuffer: Buffer = Buffer.create(0);
         trackBuffer.write(0, Buffer.fromUTF8("MTrk")); // midi header
         trackBuffer = trackBuffer.concat(Buffer.fromHex("00ff03aa")); // declare track name
-        if (isPercussion) {
-            return Buffer.fromHex("4D54726B0000001200FF030A5045524320545241434B00FF2F00");
-        } // detect if percussion, then return empty track;
+        //if (isPercussion) {
+        //    return Buffer.fromHex("4D54726B0000001200FF030A5045524320545241434B00FF2F00");
+        //} // detect if percussion, then return empty track;
         trackBuffer.setUint8(11,trackNames[trackNumber].length); // set track name length
         trackBuffer = trackBuffer.concat(Buffer.fromUTF8(trackNames[trackNumber])); // set track name
         events.forEach(function (value, index) {
