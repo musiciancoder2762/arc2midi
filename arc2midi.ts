@@ -1,6 +1,6 @@
 // convert arcade songs into midi
 
-enum arcadeInstrumentType { // instrument name in song editor with their respective indexes in midiInstrumentIndexArray
+const enum arcadeInstrumentType { // instrument name in song editor with their respective indexes in midiInstrumentIndexArray
     //%block="Dog"
     Dog = 0,
     //%block="Duck"
@@ -20,7 +20,7 @@ enum arcadeInstrumentType { // instrument name in song editor with their respect
     //%block="Lemon"
     Lemon
 }
-enum drumInstrumentType { // midi drum program names with their respective drum program indexes
+const enum drumInstrumentType { // midi drum program names with their respective drum program indexes
     //%block="STANDARD"
     STANDARD = 0,
     //%block="ROOM"
@@ -40,7 +40,7 @@ enum drumInstrumentType { // midi drum program names with their respective drum 
     //%block="SFX"
     SFX = 56
 }
-enum encoding {
+const enum encoding {
     //%block="base64"
     Base64 = 0,
     //%block="hexadecimal"
