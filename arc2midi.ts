@@ -1,4 +1,55 @@
 // convert arcade songs into midi
+
+enum arcadeInstrumentType { // instrument name in song editor with their respective indexes in midiInstrumentIndexArray
+    //%block="Dog"
+    Dog = 0,
+    //%block="Duck"
+    Duck,
+    //%block="Cat"
+    Cat,
+    //%block="Fish"
+    Fish,
+    //%block="Car"
+    Car,
+    //%block="Computer"
+    Computer,
+    //%block="Burger"
+    Burger,
+    //%block="Cherry"
+    Cherry,
+    //%block="Lemon"
+    Lemon
+}
+enum drumInstrumentType { // midi drum program names with their respective drum program indexes
+    //%block="STANDARD"
+    STANDARD = 0,
+    //%block="ROOM"
+    ROOM = 8,
+    //%block="POWER"
+    POWER = 16,
+    //%block="ELECTRONIC"
+    ELECTRONIC = 24,
+    //%block="TR808"
+    TR808 = 25,
+    //%block="JAZZ"
+    JAZZ = 32,
+    //%block="BRUSH"
+    BRUSH = 40,
+    //%block="ORCHESTRA"
+    ORCHESTRA = 48,
+    //%block="SFX"
+    SFX = 56
+}
+enum encoding {
+    //%block="base64"
+    Base64 = 0,
+    //%block="hexadecimal"
+    Hexadecimal
+}
+
+/**
+ * Basic tools for simple Arcade song conversion to MIDI
+ */
 //% icon="\uf15b" block="Arc2MIDI" color="#273C60"
 namespace arc2MIDI {
     let instrumentDataArray: Buffer[] = [ // assign instrument to its respective channel if any of the instrument data is recognised, otherwise use grand piano (0)
@@ -21,7 +72,8 @@ namespace arc2MIDI {
         80,
         45,
         81,
-        32
+        32,
+        0
     ];
     let trackNameArray: string[] = [
         "Dog",
@@ -111,11 +163,15 @@ namespace arc2MIDI {
             cleanTrk = extractPercEvents(track);
         } else {
             isPercussion = false;
-        } // detect if track is percussion/drum, then skip this track to prevent it from crashing (temp)
+        }
         for (let i = 0; i < instrumentDataArray.length; i++) {
             if (instrumentDataArray[i].equals(trackInstrument)) {
                 //game.splash(`instrument ${i} recognised`, [0x00, (0xc0 + channelNo), midiInstrumentIndexArray[i]])
-                events.push([0x00, (0xc0 + channelNo), midiInstrumentIndexArray[i]]);
+                if (isPercussion) {
+                    events.push([0x00,0xc9,midiInstrumentIndexArray[9]]);
+                } else {
+                    events.push([0x00, (0xc0 + channelNo), midiInstrumentIndexArray[i]]);
+                }
                 trackNames.push(trackNameArray[i]);
                 break;
             }
@@ -211,11 +267,12 @@ namespace arc2MIDI {
     };
     
     /**
-         * Create a Type 1 Standard MIDI File of song and output its contents in the console
+         * Create a Type 1 Standard MIDI File of song and output its contents in the console in a specified encoding
          * @param file Song to be converted to SMF. ex:assets.song`songname`
+         * @param enc The encoding of the output
     */
-    //% block="create MIDI file of song $file"
-    export function createMIDI(file: Buffer) { // create midi file from assembled midi data
+    //% block="create MIDI file of song $file with $enc encoding"
+    export function createMIDI(file: Buffer,enc:encoding) { // create midi file from assembled midi data
         let trackBufferArray: Buffer[] = [];
         tick480 = true; // set tick rate of midi file to 480 ticks/quarter note
         bpm = file.getNumber(NumberFormat.Int16LE, 1);
@@ -229,8 +286,40 @@ namespace arc2MIDI {
             trackBufferArray.push(generateTrack(extractEvents(v, i), i)); // line of death. guaranteed arcade crash -2025 <--- lies lies arcade never crashed this aint no 'line of death' -2026
         });
         const midiFile: Buffer = assembleMIDIFile(trackBufferArray);
-        console.log(b64output?midiFile.toBase64():midiFile.toHex());
+        switch(enc) {
+            case encoding.Base64:
+                console.log(midiFile.toBase64());
+                break;
+            case encoding.Hexadecimal:
+                console.log(midiFile.toHex());
+                break;
+            default:
+                console.error("unspecified/unknown encoding, encoding file in base64 by default\n \n \n \n")
+                console.log(midiFile.toBase64());
+                break;
+        }
     };
+
+    /**
+     * Customise Arcade instrument mapping by setting which Arcade instrument gets set to which MIDI instrument.
+     * @param instrumentIndex The Arcade instrument
+     * @param programIndex The MIDI program (instrument) number to assign said Arcade instrument to
+     */
+    //% programIndex.min=0 programIndex.max=127 programIndex.defl=0
+    //% block="set $instrumentIndex to MIDI program no. $programIndex"
+    export function setInstrument(instrumentIndex: arcadeInstrumentType,programIndex: number) {
+        midiInstrumentIndexArray[instrumentIndex]=programIndex;
+    }
+
+    /**
+     * Customise Arcade drum instrument mapping by setting which MIDI program to assign the drum channel.
+     * @param drumInstrument The MIDI (GM) drum type
+     */
+    //% drumInstrument.min=0 drumInstrument.max=127 drumInstrument.defl=0
+    //%block="set drums to MIDI $drumInstrument drums"
+    export function setDrumInstrument(drumInstrument: drumInstrumentType) {
+        midiInstrumentIndexArray[9]=drumInstrument;
+    }
     export let tick480: boolean = true; // set tick rate of midi file to 480 ticks/quarter note
     let bpm: uint16;
     let isPercussion: boolean = false;
