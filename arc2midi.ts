@@ -95,7 +95,7 @@ namespace arc2MIDI {
         hex``
     ];*/
     let arcadePercussionMIDINoteArray: uint8[] = [36, 36, 41, 38, 40, 42, 44, 46, 49, 39, 35, 35, 35, 35, 45, 48, 50, 35, 35, 53, 53, 35, 35, 35];
-    let trackNames: string[] = [];
+    let trackNames: string[] = ['Unknown instrument'];
     function int2vlq(int: number) { // convert integer to variable quantity length to state duration of events
         let vlq = [];
         do {
@@ -161,6 +161,7 @@ namespace arc2MIDI {
             channelNo = 9;
             isPercussion = true;
             cleanTrk = extractPercEvents(track);
+            events.push([0x00, 0xc9, midiInstrumentIndexArray[9]]);
         } else {
             isPercussion = false;
         }
@@ -172,10 +173,11 @@ namespace arc2MIDI {
                 } else {
                     events.push([0x00, (0xc0 + channelNo), midiInstrumentIndexArray[i]]);
                 }
-                trackNames.push(trackNameArray[i]);
+                trackNames.insertAt(trackNames.length-1,trackNameArray[i]);
                 break;
             }
         }
+        events.push([0x00, 0xb0+channelNo, 0x07, Math.round(trackInstrument.getNumber(NumberFormat.Int16LE, 9) / 8) > 0x7F ? 0x7F : Math.round(trackInstrument.getNumber(NumberFormat.Int16LE, 9) / 8)]); // set channel volume based on instrument
         if (events[0]===undefined) {
             events.push([0x00, (0xc0 + channelNo), 0x00]);
             trackNames.push(`TRACK ${(channelNo.toString().length)<2?"0"+channelNo:channelNo}`);
@@ -206,7 +208,7 @@ namespace arc2MIDI {
         return events;
     };
 
-    function generateTrack(events: number[][], trackNumber?: number,) { // generate midi track
+    function generateTrack(events: number[][], trackNumber?: number) { // generate midi track
         if (trackNumber === undefined) { trackNumber = 0; };
         let trackBuffer: Buffer = Buffer.create(8);
         let eventBuffer: Buffer = Buffer.create(0);
@@ -272,7 +274,7 @@ namespace arc2MIDI {
          * @param enc The encoding of the output
     */
     //% block="create MIDI file of song $file with $enc encoding"
-    export function createMIDI(file: Buffer,enc:encoding) { // create midi file from assembled midi data
+    export function createMIDI(file: Buffer,enc:encoding=encoding.Hexadecimal) { // create midi file from assembled midi data
         let trackBufferArray: Buffer[] = [];
         tick480 = true; // set tick rate of midi file to 480 ticks/quarter note
         bpm = file.getNumber(NumberFormat.Int16LE, 1);
